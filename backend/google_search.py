@@ -1,12 +1,19 @@
 from typing import List
+import os
 
+from dotenv import load_dotenv
 import requests
 
 from helper_classes.CustomSearchResult import CustomSearchResult
 
+
+# load env files
+load_dotenv()
+
 # API credentials
-API_KEY = "AIzaSyA_V85LyvaxhPceZneJ3tzrKRZklqcI-WA"
-CX = "a10036247dff048e4"
+API_URL = os.getenv("CUSTOM_SEARCH_API_URL")
+API_KEY = os.getenv("CUSTOM_SEARCH_API_KEY")
+CX = os.getenv("CUSTOM_SEARCH_CX")
 
 
 def custom_search(query_list: List[str]) -> List[CustomSearchResult]:
@@ -17,7 +24,6 @@ def custom_search(query_list: List[str]) -> List[CustomSearchResult]:
     all_results: List[CustomSearchResult] = []
 
     for query in query_list:
-        url = "https://www.googleapis.com/customsearch/v1"
         params = {
             "q": query,
             "key": API_KEY,
@@ -25,7 +31,7 @@ def custom_search(query_list: List[str]) -> List[CustomSearchResult]:
         }
 
         try:
-            response = requests.get(url, params=params)
+            response = requests.get(API_URL, params=params)
             response.raise_for_status()  # Raise an exception for HTTP errors
             search_response = response.json().get("items", [])
             search_results = [
