@@ -13,6 +13,7 @@ def user_prompt():
 
     try:
         result = llm_helper.user_query_analysis(user_query)
+        
         return {'message': result, 'status': 'success'}, 201
     except Exception as e:
         return {'error':str(e), 'status': 'error'}, 500

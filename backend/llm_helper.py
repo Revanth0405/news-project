@@ -1,35 +1,63 @@
 import ollama
-from langchain_core.prompts import PromptTemplate
-from langchain_core.output_parsers import JsonOutputParser
-from langchain_core.exceptions import OutputParserException
+import json
 
 model_name = "llama3.2"
 
 def extract_meta_info(query):
-    # Extract metadata from the query -- related topic, latest or oldest topic, category of news
+    # Extract metadata from the query with detailed guidance
     prompt = f"""
-        I have the user query: {query}
+        I have the user query: "{query}".
         The user wants to know the metadata of the query.
-        Please provide the metadata of the query.
-        Dont provide any information that is not metadata.
-        The metadata should consist of the following things:
-        1. Related topic of news
-        2. Latest news / Oldest news
-        3. Category of news
+        Provide the metadata in JSON format with the following keys:
+        
+        1. "related_topic": The primary topic or subject that the query is referring to. Be concise and specific.
+        2. "latest_news": A boolean indicating whether the user is asking for the latest news (true) or older information (false). 
+        3. "category": A list of one or more related categories from the following: 
+           ["India", "World", "Sports", "Business", "Technology", "Entertainment", "Cricket", "Science", "Environment", "Tech", "Education", "Life & Style", "Astrology"].
+        4. "google_search": A list of exactly three highly relevant Google search phrases based on the query that will yield the most accurate results.
+
+        Ensure:
+        - The "related_topic" is short and accurate.
+        - The "category" field contains only valid categories from the given list, and includes multiple relevant categories if applicable.
+        - The "google_search" field contains clear and effective search terms that align with the user's intent.
+        
+        Respond **only** with a properly formatted JSON object without any additional text.
     """
     return prompt
 
 def user_query_analysis(query):
-    # Get user query
+    # Process the user query
+    if not query:
+        raise ValueError("Query cannot be empty.")
+    
+    # Prepare the prompt
     prompt = extract_meta_info(query)
+    
+    # Send the prompt to the model
     response = ollama.chat(
         model=model_name,
         messages=[
             {"role": "user", "content": prompt}
         ]
     )
-    return response['message']['content']
+    
+    # Extract metadata from the response
+    metadata = response['message']['content']
+    
+    try:
+        # Convert the response to JSON format
+        metadata_json = json.loads(metadata)
+    except json.JSONDecodeError:
+        raise ValueError("Failed to parse metadata. Ensure the response is properly formatted JSON.")
+    
+    # Return pretty-formatted JSON
+    return json.dumps(metadata_json, indent=4)
 
-if __name__ == "__main__":
-    query = ""
-    print(user_query_analysis(query))
+# if __name__ == "__main__":
+#     # Example user query
+#     query = "What are the latest updates on climate change and its impact on global economies?"
+#     try:
+#         result = user_query_analysis(query)
+#         print(result)
+#     except Exception as e:
+#         print(f"Error: {e}")
