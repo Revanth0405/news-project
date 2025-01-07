@@ -1,9 +1,8 @@
 import requests
 
 # API credentials
-api_key = "AIzaSyA_V85LyvaxhPceZneJ3tzrKRZklqcI-WA"
-cx = "a10036247dff048e4"
-num_results = 20
+API_KEY = "AIzaSyA_V85LyvaxhPceZneJ3tzrKRZklqcI-WA"
+CX = "a10036247dff048e4"
 
 def search(query_list):
     """
@@ -16,9 +15,8 @@ def search(query_list):
         url = "https://www.googleapis.com/customsearch/v1"
         params = {
             "q": query,
-            "key": api_key,
-            # "cx": cx,
-            "num": num_results
+            "key": API_KEY,
+            "cx": CX,
         }
         
         try:
