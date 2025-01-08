@@ -1,4 +1,11 @@
 
+# editors
+.vscode/
+
+# env files
+.env
+.env.*
+
 # pycache dirs
 
 **/__pycache__/

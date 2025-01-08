@@ -1,53 +1,70 @@
+from typing import List
+import os
+
+from dotenv import load_dotenv
 import requests
 
-# API credentials
-api_key = "AIzaSyA_V85LyvaxhPceZneJ3tzrKRZklqcI-WA"
-cx = "a10036247dff048e4"
-num_results = 20
+from helper_classes.CustomSearchResult import CustomSearchResult
 
-def search(query_list):
+
+# load env files
+load_dotenv()
+
+# API credentials
+API_URL = os.getenv("CUSTOM_SEARCH_API_URL")
+API_KEY = os.getenv("CUSTOM_SEARCH_API_KEY")
+CX = os.getenv("CUSTOM_SEARCH_CX")
+
+
+def custom_search(query_list: List[str]) -> List[CustomSearchResult]:
     """
     Searches Google using the Custom Search JSON API for each query in the list.
     Returns a list of search results (items) for all queries.
     """
-    all_results = []
-    
+    all_results: List[CustomSearchResult] = []
+
     for query in query_list:
-        url = "https://www.googleapis.com/customsearch/v1"
         params = {
             "q": query,
-            "key": api_key,
-            # "cx": cx,
-            "num": num_results
+            "key": API_KEY,
+            "cx": CX,
         }
-        
+
         try:
-            response = requests.get(url, params=params)
+            response = requests.get(API_URL, params=params)
             response.raise_for_status()  # Raise an exception for HTTP errors
-            search_results = response.json().get("items", [])
+            search_response = response.json().get("items", [])
+            search_results = [
+                CustomSearchResult(
+                    item.get("title", ""),
+                    item.get("htmlTitle", ""),
+                    item.get("link", ""),
+                    item.get("displayLink", ""),
+                )
+                for item in search_response
+            ]
             all_results.extend(search_results)
         except requests.exceptions.RequestException as e:
             print(f"Error searching for query '{query}': {e}")
         except KeyError:
             print(f"No results found for query '{query}'.")
-    
+
     return all_results
+
 
 if __name__ == "__main__":
     # List of queries to search
     query_list = [
         "Latest AI technologies in India",
         "Trends in AI development",
-        "Emerging AI innovations in 2024"
+        "Emerging AI innovations in 2024",
     ]
-    
-    # Perform the search
-    results = search(query_list)
-    
-    # Print the titles of the search results
+
+    results = custom_search(query_list)
+
+    # Print the search results
     if results:
-        print("Search Results:")
         for result in results:
-            print(f"- {result['title']}")
+            print(result)
     else:
         print("No search results found.")

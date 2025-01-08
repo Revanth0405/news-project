@@ -1,7 +1,8 @@
 import ollama
 import json
 
-model_name = "llama3.2"
+MODEL_NAME = "llama3.2"
+
 
 def extract_meta_info(query):
     # Extract metadata from the query with detailed guidance
@@ -25,33 +26,34 @@ def extract_meta_info(query):
     """
     return prompt
 
+
 def user_query_analysis(query):
     # Process the user query
     if not query:
         raise ValueError("Query cannot be empty.")
-    
+
     # Prepare the prompt
     prompt = extract_meta_info(query)
-    
+
     # Send the prompt to the model
     response = ollama.chat(
-        model=model_name,
-        messages=[
-            {"role": "user", "content": prompt}
-        ]
+        model=MODEL_NAME, messages=[{"role": "user", "content": prompt}]
     )
-    
+
     # Extract metadata from the response
-    metadata = response['message']['content']
-    
+    metadata = response["message"]["content"]
+
     try:
         # Convert the response to JSON format
         metadata_json = json.loads(metadata)
     except json.JSONDecodeError:
-        raise ValueError("Failed to parse metadata. Ensure the response is properly formatted JSON.")
-    
+        raise ValueError(
+            "Failed to parse metadata. Ensure the response is properly formatted JSON."
+        )
+
     # Return pretty-formatted JSON
     return json.dumps(metadata_json, indent=4)
+
 
 # if __name__ == "__main__":
 #     # Example user query
