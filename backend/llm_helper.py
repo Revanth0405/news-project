@@ -15,7 +15,7 @@ def extract_meta_info(query):
         2. "latest_news": A boolean indicating whether the user is asking for the latest news (true) or older information (false). 
         3. "category": A list of one or more related categories from the following: 
            ["India", "World", "Sports", "Business", "Technology", "Entertainment", "Cricket", "Science", "Environment", "Tech", "Education", "Life & Style", "Astrology"].
-        4. "google_search": A list of exactly three highly relevant Google search phrases based on the query that will yield the most accurate results.
+        4. "google_search": Exactly one highly relevant Google search phrases based on the query that will yield the most accurate results.
 
         Ensure:
         - The "related_topic" is short and accurate.
