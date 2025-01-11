@@ -1,10 +1,13 @@
 from typing import List
 import os
+import time
+import threading
 
 from dotenv import load_dotenv
 import requests
 
 from helper_classes.CustomSearchResult import CustomSearchResult
+from scraping.scrape_helper import fetch_website_content
 
 
 # load env files
@@ -14,7 +17,6 @@ load_dotenv()
 API_URL = os.getenv("CUSTOM_SEARCH_API_URL")
 API_KEY = os.getenv("CUSTOM_SEARCH_API_KEY")
 CX = os.getenv("CUSTOM_SEARCH_CX")
-
 
 
 def custom_search(query: str) -> List[CustomSearchResult]:
@@ -51,17 +53,26 @@ def custom_search(query: str) -> List[CustomSearchResult]:
 
     return all_results
 
+
 if __name__ == "__main__":
     # List of queries to search
-    query_list = [
-        "Recent Kerala floods incident"
-    ]
+    query_list = ["Recent Kerala floods incident"]
 
     results = custom_search(query_list)
 
+    start = time.time()
     # Print the search results
+    threads = []
     if results:
         for result in results:
-            print(result)
+            thread = threading.Thread(
+                target=fetch_website_content, args=(f"{result.link}",)
+            )
+            threads.append(thread)
+            thread.start()
+        for thread in threads:
+            thread.join()
+        end = time.time()
+        print("Time taken", end - start)
     else:
         print("No search results found.")
