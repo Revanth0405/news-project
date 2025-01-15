@@ -1,12 +1,26 @@
-from flask import Flask, request
-import llm_helper
-import google_search
+"""
+Flask application which serves as the backend for the project, serving the api
+which enables users to post data and get results from the model itself
+"""
+
 import json
 import re
-import scraping.scraping_llm
-import scraping.scrape_helper
+from logging import getLogger
+
+from flask import Flask, request
+
+import llm_helper
+import google_search
+from scraping.scrape_helper import ContentScraper
+from app_logging import setup_logging
+
+setup_logging()
+logger = getLogger("root")
 
 app = Flask(__name__)
+
+
+my_scraper = ContentScraper()
 
 
 @app.route("/fetch_news", methods=["POST"])
@@ -16,16 +30,16 @@ def user_prompt():
         return {"error": "No query provided"}, 400
 
     try:
-        result = llm_helper.user_query_analysis(user_query)
+        result = llm_helper.analyse_query(user_query)
         json_result = json.loads(result)
         # print(json_result)
-        google_query = google_search.custom_search(json_result['google_search'])
+        google_query = google_search.custom_search(json_result["google_search"])
         for query in google_query:
             query = str(query)
             match = re.search(r"https://[^\s]+", query)
             if match:
                 link = match.group(0)
-                useful_content = scraping.scrape_helper.scrape_website(link)
+                useful_content = my_scraper.__fetch_website_content(link)
                 print(useful_content)
                 print("??????????????????????????????????????????")
             else:

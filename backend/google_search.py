@@ -1,14 +1,19 @@
 from typing import List
 import os
-import time
-import threading
+from logging import getLogger
+
+# import time
+# from threading import Thread
 
 from dotenv import load_dotenv
 import requests
 
 from helper_classes.CustomSearchResult import CustomSearchResult
-from scraping.scrape_helper import fetch_website_content
+from app_logging import setup_logging
 
+
+setup_logging()
+logger = getLogger("search_api")
 
 # load env files
 load_dotenv()
@@ -21,9 +26,10 @@ CX = os.getenv("CUSTOM_SEARCH_CX")
 
 def custom_search(query: str) -> List[CustomSearchResult]:
     """
-    Searches Google using the Custom Search JSON API for a single query.
+    Searches Google using the Custom Search API for a single query.
     Returns a list of search results (items) for the query.
     """
+    logger.debug("Fetching results from Google Custom Search API for query: %s", query)
     all_results: List[CustomSearchResult] = []
 
     params = {
@@ -33,46 +39,30 @@ def custom_search(query: str) -> List[CustomSearchResult]:
     }
 
     try:
-        response = requests.get(API_URL, params=params)
+        response = requests.get(
+            API_URL, params=params, timeout=(3, 5)
+        )  # timeout (conn_timeout, read_timeout)
         response.raise_for_status()  # Raise an exception for HTTP errors
         search_response = response.json().get("items", [])
-        search_results = [
-            CustomSearchResult(
-                item.get("title", ""),
-                item.get("htmlTitle", ""),
-                item.get("link", ""),
-                item.get("displayLink", ""),
+        for item in search_response:
+            all_results.append(
+                CustomSearchResult(
+                    item.get("title", ""),
+                    item.get("htmlTitle", ""),
+                    item.get("link", ""),
+                    item.get("displayLink", ""),
+                )
             )
-            for item in search_response
-        ]
-        all_results.extend(search_results)
     except requests.exceptions.RequestException as e:
-        print(f"Error searching for query '{query}': {e}")
-    except KeyError:
-        print(f"No results found for query '{query}'.")
+        logger.exception("Error searching for query: `%s`, with exception %s", query, e)
+    except KeyError as e:
+        logger.exception("Failed to search for query `%s` with exception %s", query, e)
 
     return all_results
 
 
 if __name__ == "__main__":
     # List of queries to search
-    query_list = ["Recent Kerala floods incident"]
+    query = "Recent Kerala floods incident"
 
-    results = custom_search(query_list)
-
-    start = time.time()
-    # Print the search results
-    threads = []
-    if results:
-        for result in results:
-            thread = threading.Thread(
-                target=fetch_website_content, args=(f"{result.link}",)
-            )
-            threads.append(thread)
-            thread.start()
-        for thread in threads:
-            thread.join()
-        end = time.time()
-        print("Time taken", end - start)
-    else:
-        print("No search results found.")
+    results = custom_search(query)
