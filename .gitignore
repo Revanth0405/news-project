@@ -9,4 +9,6 @@
 # pycache dirs
 
 **/__pycache__/
+**/frontend/
+**/node_modules/
 

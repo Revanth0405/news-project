@@ -1,11 +1,15 @@
-import ollama
 import json
+
+import ollama
 
 MODEL_NAME = "llama3.2"
 
 
-def extract_meta_info(query):
-    # Extract metadata from the query with detailed guidance
+def construct_prompt(query: str):
+    """
+    This constructs a prompt for our model for our query, attaching some extra
+    data for better context understanding for the model.
+    """
     prompt = f"""
         I have the user query: "{query}".
         The user wants to know the metadata of the query.
@@ -15,7 +19,7 @@ def extract_meta_info(query):
         2. "latest_news": A boolean indicating whether the user is asking for the latest news (true) or older information (false). 
         3. "category": A list of one or more related categories from the following: 
            ["India", "World", "Sports", "Business", "Technology", "Entertainment", "Cricket", "Science", "Environment", "Tech", "Education", "Life & Style", "Astrology"].
-        4. "google_search": A list of exactly three highly relevant Google search phrases based on the query that will yield the most accurate results.
+        4. "google_search": Exactly one highly relevant Google search phrases based on the query that will yield the most accurate results.
 
         Ensure:
         - The "related_topic" is short and accurate.
@@ -27,13 +31,16 @@ def extract_meta_info(query):
     return prompt
 
 
-def user_query_analysis(query):
-    # Process the user query
+def analyse_query(query: str) -> str:
+    """
+    Analyze the user query and understand the domain, related topic and category
+    """
+
     if not query:
         raise ValueError("Query cannot be empty.")
 
     # Prepare the prompt
-    prompt = extract_meta_info(query)
+    prompt = construct_prompt(query)
 
     # Send the prompt to the model
     response = ollama.chat(
@@ -55,11 +62,11 @@ def user_query_analysis(query):
     return json.dumps(metadata_json, indent=4)
 
 
-# if __name__ == "__main__":
-#     # Example user query
-#     query = "What are the latest updates on climate change and its impact on global economies?"
-#     try:
-#         result = user_query_analysis(query)
-#         print(result)
-#     except Exception as e:
-#         print(f"Error: {e}")
+if __name__ == "__main__":
+    # Example user query
+    user_query = "What are the latest updates on climate change and its impact on global economies?"
+    try:
+        result = analyse_query(user_query)
+        print(result)
+    except Exception as e:
+        print(f"Error: {e}")

@@ -17,4 +17,4 @@ class CustomSearchResult:
         self.displayLink = displayLink
 
     def __str__(self):
-        return f"{self.title} - {self.displayLink}"
+        return f"{self.title} - {self.link}"
