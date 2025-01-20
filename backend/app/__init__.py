@@ -6,10 +6,10 @@ import json
 
 from flask import Flask, request
 
-from backend.app.google_search import custom_search
-from backend.app.scraping import MyContentScraper
-from backend.app.output_generator import extract_information_from_html
-from backend.app.llm import analyse_user_query
+from app.google_search import custom_search
+from app.scraping import MyContentScraper
+from app.output_generator import extract_information_from_html
+from app.llm import analyse_user_query
 
 
 def create_app(name: str = __name__) -> Flask:

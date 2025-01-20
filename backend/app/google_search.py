@@ -5,8 +5,8 @@ from logging import getLogger
 from dotenv import load_dotenv
 import requests
 
-from backend.app.helpers import CustomSearchResult
-from backend.app.utils.logger import setup_logging
+from app.helpers import CustomSearchResult
+from app.utils.logger import setup_logging
 
 
 setup_logging()
