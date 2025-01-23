@@ -14,20 +14,20 @@ Helper imports:
 - setup_logging: A utility function to configure logging
 """
 
-from typing import List
 import time
 from threading import Thread
-from logging import getLogger
+from typing import List
+import logging
 
 import requests
 from bs4 import BeautifulSoup
 
 from app.helpers import CustomSearchResult
-from app.utils.logger import setup_logging
+from app.utils.logger import get_logger
 
 # Configure the logging system
-setup_logging()
-logger = getLogger("scraping")
+logger = get_logger(__name__)
+logger.setLevel(logging.DEBUG)
 
 
 class MyContentScraper:
@@ -59,7 +59,7 @@ class MyContentScraper:
         self.scrape_session = requests.Session()
         self.scrape_session.headers.update(custom_headers)
 
-    def __fetch_website_content(self, url: str, result: dict = None):
+    def __fetch_website_content(self, url: str, result: dict = {}):
         """
         Fetches the content of a given URL and extracts its main or body HTML content.
 
@@ -124,7 +124,7 @@ class MyContentScraper:
 
         end_time = time.time()  # Record the end time
         logger.info(
-            "Time taken to fetch all webpages: %.2f seconds", (end_time - start_time)
+            "Time taken to fetch %d webpages: %.2f seconds", len(web_urls), (end_time - start_time)
         )
 
         return web_contents

@@ -1,24 +1,22 @@
 from typing import List
 import os
-from logging import getLogger
 
 from dotenv import load_dotenv
 import requests
 
 from app.helpers import CustomSearchResult
-from app.utils.logger import setup_logging
+from app.utils.logger import get_logger
 
 
-setup_logging()
-logger = getLogger("search_api")
+logger = get_logger(__name__)
 
 # load env files
 load_dotenv()
 
 # API credentials
-API_URL = os.getenv("CUSTOM_SEARCH_API_URL")
-API_KEY = os.getenv("CUSTOM_SEARCH_API_KEY")
-CX = os.getenv("CUSTOM_SEARCH_CX")
+API_URL = os.getenv("CUSTOM_SEARCH_API_URL") or ""
+API_KEY = os.getenv("CUSTOM_SEARCH_API_KEY") or ""
+CX = os.getenv("CUSTOM_SEARCH_CX") or ""
 
 
 def custom_search(query: str) -> List[CustomSearchResult]:
@@ -55,7 +53,7 @@ def custom_search(query: str) -> List[CustomSearchResult]:
     except KeyError as e:
         logger.exception("Failed to search for query `%s` with exception %s", query, e)
 
-    return all_results[:1]
+    return all_results
 
 
 if __name__ == "__main__":
