@@ -22,8 +22,8 @@ from logging import getLogger
 import requests
 from bs4 import BeautifulSoup
 
-from app.helpers import CustomSearchResult
-from app.utils.logger import setup_logging
+from helpers import CustomSearchResult
+from utils.logger import setup_logging
 
 # Configure the logging system
 setup_logging()
