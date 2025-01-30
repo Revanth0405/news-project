@@ -14,20 +14,20 @@ Helper imports:
 - setup_logging: A utility function to configure logging
 """
 
-from typing import List
 import time
 from threading import Thread
-from logging import getLogger
+from typing import List
+import logging
 
 import requests
 from bs4 import BeautifulSoup
 
 from helpers import CustomSearchResult
-from utils.logger import setup_logging
+from utils.logger import get_logger
 
 # Configure the logging system
-setup_logging()
-logger = getLogger("scraping")
+logger = get_logger(__name__)
+logger.setLevel(logging.DEBUG)
 
 
 class MyContentScraper:
@@ -59,17 +59,9 @@ class MyContentScraper:
         self.scrape_session = requests.Session()
         self.scrape_session.headers.update(custom_headers)
 
-    def __fetch_website_content(self, url: str, result: dict = None):
+    def __fetch_website_content(self, url: str, result: dict):
         """
-        Fetches the content of a given URL and extracts its main or body HTML content.
-
-        Args:
-            url (str): The URL of the webpage to fetch.
-            result (dict): A shared dictionary to store the fetched content,
-            with the URL as the key.
-
-        Returns:
-            None: The result is stored in the shared `result` dictionary.
+        Fetches the content of a single webpage and stores it in the result dictionary.
         """
         logger.debug("Fetching content from URL: %s", url)
 
@@ -80,18 +72,25 @@ class MyContentScraper:
 
             # Parse the HTML content using BeautifulSoup
             raw_content = response.text
-            total_html = BeautifulSoup(raw_content, "html.parser")
+            soup = BeautifulSoup(raw_content, "html.parser")
 
-            # Extract the main or body section of the webpage
-            required_html = total_html.main or total_html.body
-            if required_html is None:
-                logger.warning("Unable to extract meaningful content from URL: %s", url)
-                result[url] = ""  # Assign an empty string if no content is found
+            # Extract text content from the main or body section of the webpage
+            if soup.main:
+                text_content = soup.main.get_text(separator="\n", strip=True)
+            elif soup.body:
+                text_content = soup.body.get_text(separator="\n", strip=True)
             else:
-                result[url] = str(required_html)  # Store the extracted content
+                text_content = "No meaningful content found"
+
+            if not text_content.strip():
+                logger.warning("Unable to extract meaningful content from URL: %s", url)
+                result[url] = "No meaningful content found"
+            else:
+                result[url] = text_content
+
         except requests.RequestException as e:
             logger.warning("Failed to fetch content from URL: %s. Error: %s", url, e)
-            result[url] = ""  # Handle request failures gracefully
+            result[url] = "Failed to fetch content"
 
     def fetch_websites(self, web_urls: List[CustomSearchResult]) -> dict:
         """
@@ -124,7 +123,7 @@ class MyContentScraper:
 
         end_time = time.time()  # Record the end time
         logger.info(
-            "Time taken to fetch all webpages: %.2f seconds", (end_time - start_time)
+            "Time taken to fetch %d webpages: %.2f seconds", len(web_urls), (end_time - start_time)
         )
 
         return web_contents

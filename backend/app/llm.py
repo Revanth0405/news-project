@@ -4,16 +4,13 @@ This module contains all the LLM-related functionality for analyzing queries and
 
 import json
 import ollama
-import requests
-from concurrent.futures import ThreadPoolExecutor, as_completed, TimeoutError
-from scraping import MyContentScraper
-from output_generator import extract_information_from_html
 import google_search
+from helpers import CustomSearchResult
+from scraping import MyContentScraper
+from output_generator_gemini import extract_information_from_website
 
 MODEL_NAME = "llama3.2"
-MAX_RESULTS = 3  # Limit number of results to process
-TIMEOUT = 30  # Increased timeout to 30 seconds
-THREAD_TIMEOUT = 20  # Timeout for individual thread processing
+MAX_RESULTS = 10  # Limit number of results to process
 
 
 def construct_user_analysis_prompt(query: str):
@@ -41,37 +38,6 @@ def construct_user_analysis_prompt(query: str):
     """
     return prompt
 
-def scrape_website(url: str):
-    """
-    Scrapes content from a given URL
-    """
-    try:
-        response = requests.get(url)
-        if response.status_code == 200:
-            webpage_content = response.text
-            return webpage_content
-        else:
-            return "Failed to retrieve webpage content"
-    except Exception as e:
-        return f"An error occurred: {str(e)}"
-
-def process_search_result(result, web_contents, query):
-    """
-    Process a single search result and its content
-    """
-    try:
-        content = web_contents.get(result.link, "")
-        if content:
-            extracted_info = extract_information_from_html(content, query)
-            return {
-                "title": result.title,
-                "link": result.link,
-                "displayLink": result.displayLink,
-                "extracted_content": extracted_info
-            }
-    except Exception as e:
-        print(f"Error processing {result.link}: {str(e)}")
-    return None
 
 def analyse_user_query(query: str) -> dict:
     """
@@ -82,67 +48,62 @@ def analyse_user_query(query: str) -> dict:
 
     # Prepare the prompt
     prompt = construct_user_analysis_prompt(query)
+
+    # Send the prompt to the model
     response = ollama.chat(
         model=MODEL_NAME, messages=[{"role": "user", "content": prompt}]
     )
+
+    # Extract metadata from the response
     metadata = response["message"]["content"]
 
     try:
         # Convert the response to JSON format
         metadata_json = json.loads(metadata)
-        
+
         # Get limited search results
         search_results = google_search.custom_search(metadata_json["google_search"])[:MAX_RESULTS]
-        
+
         if not search_results:
             print("No search results found.")
             return {"metadata": metadata_json, "search_results": [{"title": "No results", "link": "", "displayLink": "", "extracted_content": "No search results found"}]}
 
-        # Initialize scraper and fetch content with timeout
+        # Initialize scraper and fetch content
         scraper = MyContentScraper()
         web_contents = scraper.fetch_websites(search_results)
-        
-        # Process results concurrently with better error handling
-        formatted_results = []
-        
-        with ThreadPoolExecutor(max_workers=MAX_RESULTS) as executor:
-            future_to_result = {
-                executor.submit(process_search_result, result, web_contents, query): result 
-                for result in search_results
-            }
-            
-            for future in as_completed(future_to_result, timeout=TIMEOUT):
-                try:
-                    result_data = future.result(timeout=THREAD_TIMEOUT)
-                    if result_data:
-                        formatted_results.append(result_data)
-                except TimeoutError:
-                    print(f"Timeout processing a result")
-                except Exception as e:
-                    print(f"Error processing result: {str(e)}")
 
-        # Return results even if some failed
-        if formatted_results:
-            return {
-                "metadata": metadata_json,
-                "search_results": formatted_results
+        # Now we need to extract the information from the web_contents
+
+        # Print the content of the web_contents dictionary
+        for url, content in web_contents.items():
+            print(f"URL: {url}")
+            print("Content:")
+            print(extract_information_from_website(content, query))
+            print("-" * 80)
+
+        # Extract information from the fetched content
+        formatted_results = [
+            {
+                "title": result.title,
+                "link": result.link,
+                "displayLink": result.displayLink,
+                "extracted_content": "extract_information_from_website(web_contents.get(result.link, ""), query)"
             }
-        else:
-            return {
-                "metadata": metadata_json,
-                "search_results": [{"title": "Error", "link": "", "displayLink": "", 
-                                  "extracted_content": "Failed to process search results"}]
-            }
+            for result in search_results
+        ]
+
+        return {
+            "metadata": metadata_json,
+            "search_results": formatted_results
+        }
 
     except json.JSONDecodeError as e:
         raise ValueError(
             "Failed to parse metadata. Ensure the response is properly formatted JSON."
         ) from e
-    except Exception as e:
-        raise Exception(f"Error processing query: {str(e)}") from e
 
 if __name__ == "__main__":
-    result = analyse_user_query("LA wildfires, what is the cause?")
+    result = analyse_user_query("Kerala floods, what is the cause?")
     print("\nMetadata:")
     print(json.dumps(result["metadata"], indent=2))
     print("\nSearch Results and Content:")

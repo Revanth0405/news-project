@@ -31,14 +31,17 @@ def extract_information_from_website(content: str, user_prompt: str):
     
 
     response = chat_session.send_message(f"""
-        You are tasked with extracting specific information from the following text content: {content}
-        Please follow these instructions carefully: 
+		You need to extract specific information from the following text: {content}  
 
-        1. *Extract Information:* Only extract the information that directly matches the provided description in a 5 lines as a paragraph: {user_prompt}. 
-        2. *No Extra Content:* Do not include any additional text, comments, or explanations in your response. 
-        3. *Empty Response:* If no information matches the description, return an empty string ('').
-        4. *Direct Data Only:* Your output should contain only the data that is explicitly requested, with no other text.
-        """)
+		**Instructions:**  
+
+		1. **Extract Relevant Information:** Identify and extract only the content that matches the description provided: {user_prompt}.  
+		2. **Concise Output:** Return the extracted information as a single paragraph (min 5 lines). Avoid unnecessary details.  
+		3. **Strict Filtering:** If no relevant information is found, return an empty string ('').  
+		
+		Ensure precision and relevance in your extraction.
+		"""
+	)
 
     print(response.text)
     

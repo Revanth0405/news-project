@@ -29,27 +29,29 @@ LOGGING_CONFIG = {
         },
     },
     "loggers": {
-        "root": {
-            "handlers": ["console", "file"],
-            "level": "DEBUG",
-            "propagate": False,
-        },
-        "root.search_api": {
+        "": {
             "handlers": ["console", "file"],
             "level": "INFO",
             "propagate": False,
         },
-        "root.scraping": {
-            "handlers": ["console", "file"],
-            "level": "DEBUG",
+        "werkzeug": {  # Disable Werkzeug logs or control its level
+            "handlers": ["console"],
+            "level": "WARNING",  # Only log WARNING and above for Werkzeug
+            "propagate": False,
+        },
+        "flask": {  # Control Flask logs separately if needed
+            "handlers": ["console"],
+            "level": "WARNING",  # Log only warnings and errors
             "propagate": False,
         },
     },
 }
 
 
-def setup_logging():
+def get_logger(name: str = __name__):
     """
     Setup logging with default config for the application
     """
     logging.config.dictConfig(LOGGING_CONFIG)
+    return logging.getLogger(name)
+
