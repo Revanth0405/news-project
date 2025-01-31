@@ -14,13 +14,14 @@ Helper imports:
 - setup_logging: A utility function to configure logging
 """
 
+import re
 import time
 from threading import Thread
 from typing import List
 import logging
 
 import requests
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup, Tag
 
 from app.helpers import CustomSearchResult
 from app.utils.logger import get_logger
@@ -51,7 +52,6 @@ class MyContentScraper:
             AppleWebKit/537.36 (KHTML, like Gecko) Chrome/112.0.0.0 Safari/537.36",
             "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
             "Accept-Language": "en-US,en;q=0.5",
-            "Accept-Encoding": "gzip, deflate, br",
             "Connection": "keep-alive",
         }
 
@@ -59,7 +59,79 @@ class MyContentScraper:
         self.scrape_session = requests.Session()
         self.scrape_session.headers.update(custom_headers)
 
-    def __fetch_website_content(self, url: str, result: dict = {}):
+    def __clean_html(self, soup: Tag) -> str:
+        """
+        Cleans the html content, by removing unwanted elements, classes, ids, etc.
+        Elements to be removed: `['header', 'nav', 'aside', 'footer', 'iframe', 'ins', 'form', \
+'script', 'style', 'noscript', 'object', 'embed', 'image', 'video', 'picture', 'figure', 'table', 'meta']`
+        Classes to be removed: `['ad', 'ads', 'advertisement', 'sponsored', 'popup', \
+'modal', 'related-articles', 'breadcrumb', 'cookie-banner', \
+'chat-widget', 'newsletter', 'social', 'share', 'sticky']`
+        Ids to be removed: `[ads', 'comments', 'sidebar', 'footer', 'header', 'nav', \
+'popup', 'modal', 'related', 'sponsored', 'newsletter']`
+        """
+        unwanted_tags = [
+            "header",
+            "nav",
+            "aside",
+            "footer",
+            "iframe",
+            "ins",
+            "form",
+            "script",
+            "style",
+            "noscript",
+            "object",
+            "embed",
+            "image",
+            "video",
+            "picture",
+            "figure",
+            "table",
+            "meta",
+            "svg",
+        ]
+        unwanted_classes = [
+            "ad",
+            "ads",
+            "advertisement",
+            "sponsored",
+            "popup",
+            "modal",
+            "related-articles",
+            "chat-widget",
+            "social",
+            "share",
+            "sticky",
+            "widget",
+            re.compile(r"widget", re.IGNORECASE),
+        ]
+
+        start = time.time()
+        # removing these elements and classes from the given html
+
+        for tag in unwanted_tags:
+            for element in soup.find_all(tag):
+                element.decompose()
+
+        for element in soup.find_all(class_=unwanted_classes):
+            element.decompose()
+
+        # remove unwated attributes
+        for tag in soup.find_all(True):
+            tag.attrs = {
+                k: v
+                for k, v in tag.attrs.items()
+                if k in ["class", "id"] or k.startswith("data-")
+            }
+        cleaned_html = soup.prettify(formatter="minimal").replace("\n", "")
+
+        end = time.time()
+        logger.debug("Took %f time for cleaning the web-content", end - start)
+
+        return cleaned_html
+
+    def __fetch_website_content(self, url: str, result: dict = {}) -> None:
         """
         Fetches the content of a given URL and extracts its main or body HTML content.
 
@@ -79,17 +151,17 @@ class MyContentScraper:
             response.raise_for_status()  # Raise an error for non-200 HTTP status codes
 
             # Parse the HTML content using BeautifulSoup
-            raw_content = response.text
+            raw_content = response.content
             total_html = BeautifulSoup(raw_content, "html.parser")
 
             # Extract the main or body section of the webpage
             required_html = total_html.main or total_html.body
             if required_html is None:
                 logger.warning("Unable to extract meaningful content from URL: %s", url)
-                result[url] = ""  # Assign an empty string if no content is found
             else:
-                result[url] = str(required_html)  # Store the extracted content
-        except requests.RequestException as e:
+                cleaned_html = self.__clean_html(required_html)
+                result[url] = str(cleaned_html)
+        except requests.exceptions.RequestException as e:
             logger.warning("Failed to fetch content from URL: %s. Error: %s", url, e)
             result[url] = ""  # Handle request failures gracefully
 
@@ -124,7 +196,9 @@ class MyContentScraper:
 
         end_time = time.time()  # Record the end time
         logger.info(
-            "Time taken to fetch %d webpages: %.2f seconds", len(web_urls), (end_time - start_time)
+            "Time taken to fetch %d webpages: %.2f seconds",
+            len(web_contents.keys()),
+            (end_time - start_time),
         )
 
         return web_contents
