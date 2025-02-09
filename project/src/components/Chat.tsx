@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
-import { Send, Newspaper, Brain, Shield } from 'lucide-react';
+import React, { useState } from "react";
+import { Send, Newspaper, Brain, Shield } from "lucide-react";
 
 interface Message {
-  type: 'user' | 'ai';
+  type: "user" | "ai";
   content: string;
 }
 
@@ -13,7 +13,7 @@ interface Analysis {
 }
 
 function Chat() {
-  const [input, setInput] = useState('');
+  const [input, setInput] = useState("");
   const [messages, setMessages] = useState<Message[]>([]);
   const [analysis, setAnalysis] = useState<Analysis | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -22,23 +22,25 @@ function Chat() {
     e.preventDefault();
     if (!input.trim()) return;
 
-    setMessages(prev => [...prev, { type: 'user', content: input }]);
-    
+    setMessages((prev) => [...prev, { type: "user", content: input }]);
+
     setIsLoading(true);
     setTimeout(() => {
       setAnalysis({
-        summary: "This is a simulated AI summary of the news topic you've requested. In a real application, this would contain an actual analysis of news articles related to your query.",
-        ethical: "Here we would provide ethical considerations and potential biases in the news coverage.",
+        summary:
+          "This is a simulated AI summary of the news topic you've requested. In a real application, this would contain an actual analysis of news articles related to your query.",
+        ethical:
+          "Here we would provide ethical considerations and potential biases in the news coverage.",
         insights: [
           "Key insight 1: Important statistical data",
           "Key insight 2: Relevant market trends",
-          "Key insight 3: Social impact analysis"
-        ]
+          "Key insight 3: Social impact analysis",
+        ],
       });
       setIsLoading(false);
     }, 1500);
 
-    setInput('');
+    setInput("");
   };
 
   return (
@@ -56,14 +58,14 @@ function Chat() {
               <div
                 key={index}
                 className={`flex ${
-                  message.type === 'user' ? 'justify-end' : 'justify-start'
+                  message.type === "user" ? "justify-end" : "justify-start"
                 }`}
               >
                 <div
                   className={`max-w-[80%] rounded-lg p-3 ${
-                    message.type === 'user'
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-gray-700 text-gray-100'
+                    message.type === "user"
+                      ? "bg-blue-600 text-white"
+                      : "bg-gray-700 text-gray-100"
                   }`}
                 >
                   {message.content}
