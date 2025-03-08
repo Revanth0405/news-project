@@ -34,16 +34,16 @@ LOGGING_CONFIG = {
             "level": "INFO",
             "propagate": False,
         },
-        "werkzeug": {  # Disable Werkzeug logs or control its level
-            "handlers": ["console"],
-            "level": "WARNING",  # Only log WARNING and above for Werkzeug
-            "propagate": False,
-        },
-        "flask": {  # Control Flask logs separately if needed
-            "handlers": ["console"],
-            "level": "WARNING",  # Log only warnings and errors
-            "propagate": False,
-        },
+        # "werkzeug": {  # Disable Werkzeug logs or control its level
+        #     "handlers": ["console"],
+        #     "level": "WARNING",  # Only log WARNING and above for Werkzeug
+        #     "propagate": False,
+        # },
+        # "flask": {  # Control Flask logs separately if needed
+        #     "handlers": ["console"],
+        #     "level": "WARNING",  # Log only warnings and errors
+        #     "propagate": False,
+        # },
     },
 }
 

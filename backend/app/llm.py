@@ -6,6 +6,8 @@ import json
 
 import ollama
 
+from app.utils.genai_model import genai_chat_session
+
 MODEL_NAME = "llama3.2"
 
 
@@ -46,13 +48,15 @@ def analyse_user_query(query: str) -> str:
     # Prepare the prompt
     prompt = construct_user_analysis_prompt(query)
 
-    # Send the prompt to the model
-    response = ollama.chat(
-        model=MODEL_NAME, messages=[{"role": "user", "content": prompt}]
-    )
+    # # Send the prompt to the model
+    # response = ollama.chat(
+    #     model=MODEL_NAME, messages=[{"role": "user", "content": prompt}]
+    # )
+    response = genai_chat_session.send_message(prompt)
 
     # Extract metadata from the response
-    metadata = response["message"]["content"]
+    # metadata = response["message"]["content"]
+    metadata = response.text[8:-4]
 
     try:
         # Convert the response to JSON format
@@ -64,6 +68,7 @@ def analyse_user_query(query: str) -> str:
 
     # Return pretty-formatted JSON
     return json.dumps(metadata_json, indent=4)
+
 
 if __name__ == "__main__":
     print(analyse_user_query("LA wildfires, what is the cause?"))

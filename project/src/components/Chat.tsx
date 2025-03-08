@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Send, Newspaper, Brain, Shield } from "lucide-react";
+import { api } from "../utils/api";
 
 interface Message {
   type: "user" | "ai";
@@ -18,27 +19,30 @@ function Chat() {
   const [analysis, setAnalysis] = useState<Analysis | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim()) return;
 
     setMessages((prev) => [...prev, { type: "user", content: input }]);
 
     setIsLoading(true);
-    setTimeout(() => {
-      setAnalysis({
-        summary:
-          "This is a simulated AI summary of the news topic you've requested. In a real application, this would contain an actual analysis of news articles related to your query.",
-        ethical:
-          "Here we would provide ethical considerations and potential biases in the news coverage.",
-        insights: [
-          "Key insight 1: Important statistical data",
-          "Key insight 2: Relevant market trends",
-          "Key insight 3: Social impact analysis",
-        ],
-      });
-      setIsLoading(false);
-    }, 1500);
+    const { data } = await api.get("/fetch_news", {
+      params: {
+        q: input,
+      },
+    });
+    setAnalysis({
+      summary:
+        "This is a simulated AI summary of the news topic you've requested. In a real application, this would contain an actual analysis of news articles related to your query.",
+      ethical:
+        "Here we would provide ethical considerations and potential biases in the news coverage.",
+      insights: [
+        "Key insight 1: Important statistical data",
+        "Key insight 2: Relevant market trends",
+        "Key insight 3: Social impact analysis",
+      ],
+    });
+    setIsLoading(false);
 
     setInput("");
   };

@@ -9,12 +9,13 @@ from flask import Flask, request
 
 from app.google_search import custom_search
 from app.scraping import MyContentScraper
-from app.output_generator import extract_information_from_html
+from app.output_generator import extract_information_from_html_genai
 from app.llm import analyse_user_query
 from app.utils.logger import get_logger
 
 logger = get_logger(__name__)
 logger.setLevel(logging.DEBUG)
+
 
 def create_app(name: str = __name__) -> Flask:
     """
@@ -25,11 +26,11 @@ def create_app(name: str = __name__) -> Flask:
     my_scraper = MyContentScraper()
 
     # setup routes
-    @app.route('/status')
+    @app.route("/status")
     def status():
         return "App running and live"
 
-    @app.route('/fetch_news', methods=['POST'])
+    @app.route("/fetch_news", methods=["POST"])
     def fetch_news():
         user_query = request.args.get("query")
         if not user_query:
@@ -43,13 +44,14 @@ def create_app(name: str = __name__) -> Flask:
             google_query = custom_search(json_result["google_search"])
             output = my_scraper.fetch_websites(google_query)
             useful_content = ""
+            threads = []
             for _, value in output.items():
                 useful_content += value
-            result = extract_information_from_html(useful_content, user_query)
+            useful_content = useful_content[:1000000]
+            result = extract_information_from_html_genai(useful_content, user_query)
 
             return {"message": useful_content, "status": "success"}, 201
         except Exception as e:
             return {"error": str(e), "status": "error"}, 500
 
     return app
-
